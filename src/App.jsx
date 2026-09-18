@@ -29,11 +29,11 @@ function transformSentence(s,mode,index){
   x=x.replace(/has made (.+?) an important part of/gi,'has become an important part of');
  }
  if(mode==='Student style'){
-  x=x.replace(/^At the same time,\s*/i,'Creators can also ');
+  x=x.replace(/At the same time, creators can use the platform to build an audience and earn money from their content/gi,'Creators can also use YouTube to reach viewers and earn money from their videos');
   x=x.replace(/people can watch, create, and share videos on many different topics/gi,'people can watch and share videos about many topics');
   x=x.replace(/It provides educational content, entertainment, news, music, tutorials, and more/gi,'The platform has videos about education, entertainment, news, music, tutorials, and many other subjects');
   x=x.replace(/Students can use YouTube to learn new skills and understand difficult subjects through visual explanations/gi,'Students can use YouTube to learn skills and understand difficult topics through videos');
-  x=x.replace(/creators can use the platform to build an audience and earn money from their content/gi,'creators can use it to reach viewers and earn money from their videos');
+  x=x.replace(/creators can use the platform to build an audience and earn money from their content/gi,'Creators can also use YouTube to reach viewers and earn money from their videos');
   x=x.replace(/Its easy access and wide range of videos have made YouTube an important part of modern digital media/gi,'Because it is easy to access and has so much content, YouTube has become an important part of digital media');
   x=x.replace(/one of the most popular online video platforms/gi,'a widely used online video platform');
  }

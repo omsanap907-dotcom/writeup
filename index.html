@@ -1,12 +1,68 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WriteUp Chunker</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>WriteUp Chunker</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f4f5f7;color:#18202a}
+button,input,textarea{font:inherit}body{min-height:100vh}.app{max-width:1100px;margin:auto;padding:32px 20px}
+header{margin-bottom:24px}h1{margin:0 0 6px;font-size:32px}p{color:#68717d;margin:0}
+.panel{background:#fff;border:1px solid #e1e5ea;border-radius:14px;padding:20px;box-shadow:0 4px 18px #00000008}
+.controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin-bottom:14px}.field{display:flex;flex-direction:column;gap:6px}.field label{font-size:13px;font-weight:600}.field input{width:150px;padding:10px;border:1px solid #ccd2d9;border-radius:8px}
+textarea{width:100%;min-height:300px;resize:vertical;padding:14px;border:1px solid #ccd2d9;border-radius:10px;outline:none}textarea:focus,input:focus{border-color:#667eea}
+button{border:0;border-radius:8px;padding:10px 14px;cursor:pointer;font-weight:600;background:#202938;color:white}button.secondary{background:#eef1f5;color:#202938}button:disabled{opacity:.45;cursor:not-allowed}
+.stats{display:flex;gap:18px;margin:12px 0;color:#68717d;font-size:14px}.chunks{display:grid;gap:16px;margin-top:20px}.chunk{border:1px solid #e1e5ea;border-radius:12px;overflow:hidden;background:#fff}.chunkhead{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#f7f8fa;border-bottom:1px solid #e1e5ea}.chunkhead strong{font-size:15px}.chunkbody{padding:16px;white-space:pre-wrap;line-height:1.65;max-height:430px;overflow:auto}.empty{padding:35px;text-align:center;color:#7b8490}
+@media(max-width:600px){.app{padding:20px 12px}h1{font-size:26px}.controls>*{width:100%}.field input{width:100%}}
+</style>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="module" src="/writeup/src/main.jsx"></script>
+<div class="app">
+<header><h1>WriteUp Chunker</h1><p>Paste your document and split it into copy-ready chunks without changing the wording.</p></header>
+<div class="panel">
+<div class="controls">
+<div class="field"><label for="limit">Words per copy</label><input id="limit" type="number" min="1" value="3000"></div>
+<button id="split">Split Text</button><button id="copyAll" class="secondary" disabled>Copy All</button><button id="download" class="secondary" disabled>Download TXT</button>
+</div>
+<textarea id="source" placeholder="Paste your full document here..."></textarea>
+<div class="stats"><span id="wordCount">0 words</span><span id="chunkCount">0 copies</span></div>
+<div id="chunks" class="chunks"><div class="empty">Your copies will appear here.</div></div>
+</div>
+</div>
+<script>
+const source=document.getElementById('source'),limit=document.getElementById('limit'),chunksEl=document.getElementById('chunks'),wordCount=document.getElementById('wordCount'),chunkCount=document.getElementById('chunkCount'),copyAll=document.getElementById('copyAll'),download=document.getElementById('download');
+let chunks=[];
+function words(s){return s.trim()?s.trim().split(/\s+/).length:0}
+function splitText(text,max){
+ text=text.replace(/\r\n?/g,'\n').trim(); if(!text)return [];
+ const paras=text.split(/\n\s*\n/); const out=[]; let current=[];
+ for(const p of paras){
+   const n=words(p);
+   if(n<=max && words([...current,p].join('\n\n'))<=max){current.push(p);continue}
+   if(current.length){out.push(current.join('\n\n'));current=[]}
+   if(n<=max){current=[p];continue}
+   const ws=p.split(/\s+/);
+   for(let i=0;i<ws.length;i+=max)out.push(ws.slice(i,i+max).join(' '));
+ }
+ if(current.length)out.push(current.join('\n\n'));
+ return out;
+}
+function render(){
+ chunksEl.innerHTML='';
+ if(!chunks.length){chunksEl.innerHTML='<div class="empty">Your copies will appear here.</div>';return}
+ chunks.forEach((c,i)=>{
+  const box=document.createElement('div');box.className='chunk';
+  box.innerHTML='<div class="chunkhead"><strong>Copy '+(i+1)+' · '+words(c)+' words</strong><button class="secondary">Copy</button></div><div class="chunkbody"></div>';
+  box.querySelector('.chunkbody').textContent=c;
+  box.querySelector('button').onclick=async()=>{await navigator.clipboard.writeText(c);box.querySelector('button').textContent='Copied';setTimeout(()=>box.querySelector('button').textContent='Copy',1000)};
+  chunksEl.appendChild(box);
+ });
+}
+function run(){const max=Math.max(1,parseInt(limit.value)||3000);chunks=splitText(source.value,max);wordCount.textContent=words(source.value)+' words';chunkCount.textContent=chunks.length+' copies';copyAll.disabled=!chunks.length;download.disabled=!chunks.length;render()}
+document.getElementById('split').onclick=run;
+source.addEventListener('input',()=>{wordCount.textContent=words(source.value)+' words'});
+copyAll.onclick=async()=>{await navigator.clipboard.writeText(chunks.join('\n\n'));copyAll.textContent='Copied All';setTimeout(()=>copyAll.textContent='Copy All',1200)};
+download.onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([chunks.join('\n\n')],{type:'text/plain'}));a.download='writeup-chunks.txt';a.click();URL.revokeObjectURL(a.href)};
+</script>
 </body>
 </html>
